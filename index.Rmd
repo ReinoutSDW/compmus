@@ -1,0 +1,19 @@
+---
+title: "This is my title"
+author: "Reinout"
+output: 
+  flexdashboard::flex_dashboard:
+    storyboard: true
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(flexdashboard)
+```
+
+### hi
+
+```{r}
+2+2
+```
+
