@@ -9,6 +9,7 @@ output:
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(flexdashboard)
+library(plotly)
 ```
 
 ### hi
@@ -22,7 +23,8 @@ aisc2024 |>                   # Start with the data
       x = arousal,
       y = danceability,
       size = instrumentalness,
-      colour = tempo
+      colour = tempo,
+      label = artist
     )
   ) +
   geom_point() +              # Scatter plot.
@@ -57,5 +59,6 @@ aisc2024 |>                   # Start with the data
     y = "Danceability",
     colour = "Tempo"
   )
+ggplotly()
 ```
 
