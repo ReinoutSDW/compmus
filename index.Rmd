@@ -1,5 +1,5 @@
 ---
-title: "This is my title"
+title: "Rally house and trance compared to rest of class corpus"
 author: "Reinout"
 output: 
   flexdashboard::flex_dashboard:
@@ -12,11 +12,13 @@ library(flexdashboard)
 library(plotly)
 ```
 
-### Introduction
+### Welcome
 
-hoi
+Hi, welcome to my website. On this site there's an analysis of the class corpus of Computational Musicology 2025.
 
-### Visualisation
+For my own songs, I found both on a YouTube channel called BORNEO. I'm an amateur DJ, and my usual set starts off with rally house (reinout-w-1) and gradually flows into trance (reinout-w-2). I was looking for royalty hard house at first, but couldn't find so. Then I started looking for royalty free trance, and BORNEO showed up. On his page, I found both songs.
+
+### The more arousing, the more engaging, the more dancable
 
 ```{r}
 aisc2024 <- read_csv("compmus2025.csv")
@@ -24,18 +26,17 @@ aisc2024 <- read_csv("compmus2025.csv")
 aisc2024 |>                   # Start with the data
   ggplot(                     # Set up the plot.
     aes(
-      x = tempo,
+      x = arousal,
       y = engagingness,
-      size = danceability,
-      colour = arousal,
+      colour = danceability,
       label = filename
     )
   ) +
   geom_point() +              # Scatter plot.
   geom_rug(linewidth = 0.1) + # Add 'fringes' to show data distribution.
   geom_text(                  # Add text labels from above.
-    x = 90,
-    y = 1.0174429416656494,
+    x = 6.304508209228516,
+    y = 1.0374429416656494,
     label = "reinout-w-1",
     size = 2,                 # Override size (not loudness here).
     hjust = "left",           # Align left side of label with the point.
@@ -44,8 +45,8 @@ aisc2024 |>                   # Start with the data
     color = "black"                # Rotate the text label
   ) +
   geom_text(                  # Add text labels from above.
-    x = 103,
-    y = 0.9157294034957886,
+    x = 6.568565845489502,
+    y = 0.9357294034957886,
     label = "reinout-w-2",
     size = 2,                 # Override size (not loudness here).
     hjust = "left",           # Align left side of label with the point.
@@ -54,8 +55,8 @@ aisc2024 |>                   # Start with the data
     color = "black"
   ) +
   scale_x_continuous(         # Fine-tune the x axis.
-    limits = c(70, 160),
-    breaks = c(70, 115, 160), # Specify grid lines
+    limits = c(3, 7.5),
+    breaks = c(3, 5.25, 7.5), # Specify grid lines
     minor_breaks = NULL       # Remove 'minor' grid lines.
   ) +
   scale_y_continuous(         # Fine-tune the y axis in the same way.
@@ -70,17 +71,21 @@ aisc2024 |>                   # Start with the data
   ) +
   theme_light() +             # Use a simpler theme.
   labs(                       # Make the titles nice.
-    x = "Tempo",
+    x = "Arousal",
     y = "Engagingness",
-    colour = "Arousal"
+    colour = "Danceability"
   )
 ggplotly()
 ```
 
 ***
 
-extra info about the plot
+On the left is the graph. When it comes to my tracks, we can see that they are very high in both engagingness and arousal compared to the rest of the class. For example, 'reinout-w-1' is number 4 in engagingness, and 'reinout-w-2' is number 3 in arousal. They are also both high in danceability.
 
-### Conclusion
+Essentia characterised my tracks correctly. Both tracks have a lot of energy, which correlates with the variables above being high.
 
-bye
+When it comes to the rest of the corpus, my songs have more energy. This is also what I concluded when I listened to the songs of the corpus itself. My tracks are not similar to most of the tracks from the corpus, meaning Essentia did a good job identifying.
+
+### What we found
+
+As can be seen in the graph, the engagingness increases when the arousal increases. This means that the engagingness and the arousal are positively correlated. Furthermore, as we can see the engagingness and arousal increase, the color of the data becomes more and more towards yellow, starting from dark blue. This means that the danceabiltiy also increases with the engagingness and the arousal. Conclusion: all three variables are positively correlated.
