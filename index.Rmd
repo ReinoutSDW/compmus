@@ -10,6 +10,7 @@ output:
 library(tidyverse)
 library(flexdashboard)
 library(plotly)
+source("compmus.R")
 ```
 
 ### Welcome
@@ -17,6 +18,75 @@ library(plotly)
 Hi, welcome to my website. On this site there's an analysis of the class corpus of Computational Musicology 2025.
 
 For my own songs, I found both on a YouTube channel called BORNEO. I'm an amateur DJ, and my usual set starts off with rally house (reinout-w-1) and gradually flows into trance (reinout-w-2). I was looking for royalty hard house at first, but couldn't find so. Then I started looking for royalty free trance, and BORNEO showed up. On his page, I found both songs.
+
+### Chromagram
+
+```{r}
+"features/reinout-w-1.json" |>                         # Change the track
+  compmus_chroma(norm = "identity") |>                 # Change the norm
+  ggplot(aes(x = time, y = pc, fill = value)) + 
+  geom_raster() +
+  scale_y_continuous(
+    breaks = 0:11,
+    minor_breaks = NULL,
+    labels = c(
+                "C", "C#|Db", "D", "D#|Eb",
+                "E", "F", "F#|Gb", "G",
+                "G#|Ab", "A", "A#|Bb", "B"
+              )
+  ) +
+  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  labs(x = "Time (s)", y = NULL, fill = NULL) +
+  theme_classic()                                      # Change the theme?
+```
+
+### Cepstogram
+
+```{r}
+"features/reinout-w-1.json" |>                         # Change the track
+  compmus_mfccs(norm = "identity") |>                  # Change the norm
+  ggplot(aes(x = time, y = mfcc, fill = value)) + 
+  geom_raster() +
+  scale_y_continuous(
+    breaks = 0:12,
+    minor_breaks = NULL,
+  ) +
+  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  labs(x = "Time (s)", y = "Coefficient Number", fill = NULL) +
+  theme_classic()  
+```
+
+### Chroma-based self-similarity
+
+```{r}
+"features/reinout-w-1.json" |>                           # Change the track
+  compmus_chroma(norm = "identity") |>                 # Change the norm
+  compmus_self_similarity(
+    feature = pc,
+    distance = "euclidean"                             # Change the distance
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  labs(x = "Time (s)", y = NULL, fill = NULL) +
+  theme_classic()                                      # Change the theme?                                    # Change the theme?
+```
+
+### Timbre-based self-similarity
+
+```{r}
+"features/reinout-w-1.json" |>                         # Change the track
+  compmus_mfccs(norm = "identity") |>                  # Change the norm
+  compmus_self_similarity(
+    feature = mfcc,
+    distance = "euclidean"                             # Change the distance
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  labs(x = "Time (s)", y = NULL, fill = NULL) +
+  theme_classic()                                      # Change the theme?
+```
 
 ### The more arousing, the more engaging, the more dancable
 
