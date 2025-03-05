@@ -31,7 +31,7 @@ library(rjson)
 #'   mutate(pitches = map(pitches, compmus_normalise, "euclidean"))
 compmus_normalise <- function(v, method = "euclidean") {
   ## Supported functions
-
+  
   harmonic <- function(v) v * sum(1 / abs(v))
   manhattan <- function(v) v / sum(abs(v))
   euclidean <- function(v) v / sqrt(sum(v^2))
@@ -43,9 +43,9 @@ compmus_normalise <- function(v, method = "euclidean") {
   softmax <- function(v) {
     exp(v) / sum(exp(v))
   }
-
+  
   ## Method aliases
-
+  
   METHODS <-
     list(
       identity = identity,
@@ -60,9 +60,9 @@ compmus_normalise <- function(v, method = "euclidean") {
       clr = clr,
       softmax = softmax
     )
-
+  
   ## Function selection
-
+  
   if (!is.na(i <- pmatch(method, names(METHODS)))) {
     METHODS[[i]](v)
   } else {
@@ -121,9 +121,9 @@ compmus_normalize <- compmus_normalise
 #' compmus_self_similarity(tallis, pitches, method = "aitchison")
 compmus_long_distance <- function(xdat, ydat, feature, distance = "euclidean") {
   feature <- enquo(feature)
-
+  
   ## Supported functions
-
+  
   manhattan <- function(x, y) sum(abs(x - y))
   euclidean <- function(x, y) sqrt(sum((x - y)^2))
   chebyshev <- function(x, y) max(abs(x - y))
@@ -135,9 +135,9 @@ compmus_long_distance <- function(xdat, ydat, feature, distance = "euclidean") {
   aitchison <- function(x, y) {
     euclidean(compmus_normalise(x, "clr"), compmus_normalise(y, "clr"))
   }
-
+  
   ## Method aliases
-
+  
   METHODS <-
     list(
       manhattan = manhattan,
@@ -155,9 +155,9 @@ compmus_long_distance <- function(xdat, ydat, feature, distance = "euclidean") {
       angular = angular,
       aitchison = aitchison
     )
-
+  
   ## Function selection
-
+  
   if (!is.na(i <- pmatch(distance, names(METHODS)))) {
     dplyr::cross_join(
       xdat |>
@@ -259,9 +259,9 @@ compmus_self_similarity <- function(dat, feature, distance = "euclidean") {
 #'   ) %>%
 #'   compmus_match_pitch_template(chord_templates, "euclidean", "manhattan")
 compmus_match_pitch_templates <- function(dat, templates, norm = "euclidean", distance = "cosine") {
-
-    ## Supported functions
-
+  
+  ## Supported functions
+  
   manhattan <- function(x, y) sum(abs(x - y))
   euclidean <- function(x, y) sqrt(sum((x - y)^2))
   chebyshev <- function(x, y) max(abs(x - y))
@@ -273,9 +273,9 @@ compmus_match_pitch_templates <- function(dat, templates, norm = "euclidean", di
   aitchison <- function(x, y) {
     euclidean(compmus_normalise(x, "clr"), compmus_normalise(y, "clr"))
   }
-
+  
   ## Method aliases
-
+  
   METHODS <-
     list(
       manhattan = manhattan,
@@ -293,9 +293,9 @@ compmus_match_pitch_templates <- function(dat, templates, norm = "euclidean", di
       angular = angular,
       aitchison = aitchison
     )
-
+  
   ## Function selection
-
+  
   if (!is.na(i <- pmatch(distance, names(METHODS)))) {
     dplyr::cross_join(
       dat |>
@@ -315,7 +315,7 @@ compmus_match_pitch_templates <- function(dat, templates, norm = "euclidean", di
           name,
           y = purrr::map(template, \(v) compmus_normalise(v, norm))
         )
-      ) |>
+    ) |>
       dplyr::transmute(
         time,
         name = factor(name, levels = purrr::pluck(templates, "name")),
