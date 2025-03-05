@@ -31,7 +31,7 @@ library(rjson)
 #'   mutate(pitches = map(pitches, compmus_normalise, "euclidean"))
 compmus_normalise <- function(v, method = "euclidean") {
   ## Supported functions
-
+  
   harmonic <- function(v) v * sum(1 / abs(v))
   manhattan <- function(v) v / sum(abs(v))
   euclidean <- function(v) v / sqrt(sum(v^2))
@@ -43,9 +43,9 @@ compmus_normalise <- function(v, method = "euclidean") {
   softmax <- function(v) {
     exp(v) / sum(exp(v))
   }
-
+  
   ## Method aliases
-
+  
   METHODS <-
     list(
       identity = identity,
@@ -60,9 +60,9 @@ compmus_normalise <- function(v, method = "euclidean") {
       clr = clr,
       softmax = softmax
     )
-
+  
   ## Function selection
-
+  
   if (!is.na(i <- pmatch(method, names(METHODS)))) {
     METHODS[[i]](v)
   } else {
@@ -121,9 +121,9 @@ compmus_normalize <- compmus_normalise
 #' compmus_self_similarity(tallis, pitches, method = "aitchison")
 compmus_long_distance <- function(xdat, ydat, feature, distance = "euclidean") {
   feature <- enquo(feature)
-
+  
   ## Supported functions
-
+  
   manhattan <- function(x, y) sum(abs(x - y))
   euclidean <- function(x, y) sqrt(sum((x - y)^2))
   chebyshev <- function(x, y) max(abs(x - y))
@@ -135,9 +135,9 @@ compmus_long_distance <- function(xdat, ydat, feature, distance = "euclidean") {
   aitchison <- function(x, y) {
     euclidean(compmus_normalise(x, "clr"), compmus_normalise(y, "clr"))
   }
-
+  
   ## Method aliases
-
+  
   METHODS <-
     list(
       manhattan = manhattan,
@@ -155,9 +155,9 @@ compmus_long_distance <- function(xdat, ydat, feature, distance = "euclidean") {
       angular = angular,
       aitchison = aitchison
     )
-
+  
   ## Function selection
-
+  
   if (!is.na(i <- pmatch(distance, names(METHODS)))) {
     dplyr::cross_join(
       xdat |>
@@ -258,27 +258,72 @@ compmus_self_similarity <- function(dat, feature, distance = "euclidean") {
 #'       )
 #'   ) %>%
 #'   compmus_match_pitch_template(chord_templates, "euclidean", "manhattan")
-compmus_match_pitch_template <- function(dat, templates, method = "cosine", norm = "euclidean") {
-  compmus_long_distance(
-    dat %>%
-      dplyr::mutate(
-        pitches = purrr::map(pitches, compmus_normalise, norm)
-      ),
-    templates %>%
-      dplyr::transmute(
-        start = name,
-        duration = 1,
-        pitches = purrr::map(template, compmus_normalise, norm)
-      ),
-    feature = pitches,
-    method = method
-  ) %>%
-    dplyr::transmute(
-      start = xstart,
-      duration = xduration,
-      name = factor(ystart, levels = purrr::pluck(templates, "name")),
-      d
+compmus_match_pitch_templates <- function(dat, templates, norm = "euclidean", distance = "cosine") {
+  
+  ## Supported functions
+  
+  manhattan <- function(x, y) sum(abs(x - y))
+  euclidean <- function(x, y) sqrt(sum((x - y)^2))
+  chebyshev <- function(x, y) max(abs(x - y))
+  pearson <- function(x, y) 1 - cor(x, y)
+  cosine <- function(x, y) {
+    1 - sum(compmus_normalise(x, "euc") * compmus_normalise(y, "euc"))
+  }
+  angular <- function(x, y) 2 * acos(1 - cosine(x, y)) / pi
+  aitchison <- function(x, y) {
+    euclidean(compmus_normalise(x, "clr"), compmus_normalise(y, "clr"))
+  }
+  
+  ## Method aliases
+  
+  METHODS <-
+    list(
+      manhattan = manhattan,
+      cityblock = manhattan,
+      taxicab = manhattan,
+      L1 = manhattan,
+      totvar = manhattan,
+      euclidean = euclidean,
+      L2 = euclidean,
+      chebyshev = chebyshev,
+      maximum = chebyshev,
+      pearson = pearson,
+      correlation = pearson,
+      cosine = cosine,
+      angular = angular,
+      aitchison = aitchison
     )
+  
+  ## Function selection
+  
+  if (!is.na(i <- pmatch(distance, names(METHODS)))) {
+    dplyr::cross_join(
+      dat |>
+        tidyr::nest(.by = time) |>
+        dplyr::transmute(
+          time,
+          x =
+            purrr::map(
+              data,
+              \(df) df |> dplyr::arrange(pc) |> dplyr::pull(value)
+            )
+        ) |>
+        dplyr::arrange(time) |>
+        dplyr::filter(dplyr::row_number(time) %% 10 == 5),
+      templates |>
+        dplyr::transmute(
+          name,
+          y = purrr::map(template, \(v) compmus_normalise(v, norm))
+        )
+    ) |>
+      dplyr::transmute(
+        time,
+        name = factor(name, levels = purrr::pluck(templates, "name")),
+        d = purrr::map2_dbl(x, y, METHODS[[i]])
+      )
+  } else {
+    stop("The distance name is ambiguous or the method is unsupported.")
+  }
 }
 
 circshift <- function(v, n) {
