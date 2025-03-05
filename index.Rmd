@@ -43,7 +43,7 @@ For my own songs, I found both on a YouTube channel called BORNEO. I'm an amateu
 ### Cepstogram
 
 ```{r}
-"features/reinout-w-1.json" |>                         # Change the track
+"features/reinout-w-1.json" |>                           # Change the track
   compmus_mfccs(norm = "identity") |>                  # Change the norm
   ggplot(aes(x = time, y = mfcc, fill = value)) + 
   geom_raster() +
