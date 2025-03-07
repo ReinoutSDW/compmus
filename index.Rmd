@@ -10,6 +10,7 @@ output:
 library(tidyverse)
 library(flexdashboard)
 library(plotly)
+library(patchwork)
 source("compmus.R")
 ```
 
@@ -40,6 +41,10 @@ For my own songs, I found both on a YouTube channel called BORNEO. I'm an amateu
   theme_classic()                                      # Change the theme?
 ```
 
+***
+
+Extra info
+
 ### Cepstogram
 
 ```{r}
@@ -55,6 +60,10 @@ For my own songs, I found both on a YouTube channel called BORNEO. I'm an amateu
   labs(x = "Time (s)", y = "Coefficient Number", fill = NULL) +
   theme_classic()  
 ```
+
+***
+
+Extra info
 
 ### Chroma-based self-similarity
 
@@ -72,6 +81,10 @@ For my own songs, I found both on a YouTube channel called BORNEO. I'm an amateu
   theme_classic()                                      # Change the theme?                                    # Change the theme?
 ```
 
+***
+
+Extra info
+
 ### Timbre-based self-similarity
 
 ```{r}
@@ -87,6 +100,10 @@ For my own songs, I found both on a YouTube channel called BORNEO. I'm an amateu
   labs(x = "Time (s)", y = NULL, fill = NULL) +
   theme_classic()                                      # Change the theme?
 ```
+
+***
+
+Extra info
 
 ### The more arousing, the more engaging, the more dancable
 
@@ -259,11 +276,16 @@ key_templates <-
   ) |>
   ggplot(aes(x = time, y = name, fill = d)) + 
   geom_raster() +
-  scale_fill_viridis_c(guide = "none") +               # Change the colours?
-  labs(x = "Time (s)", y = "Template", fill = NULL) +
+  scale_fill_viridis_c(name = "Distance") +               # Add legend by setting a name
+  labs(x = "Time (s)", y = "Template", fill = "Distance") +
   theme_classic()                                      # Change the theme?
 
+
 ```
+
+***
+
+Extra info
 
 #### Keygram of song 2
 
@@ -277,11 +299,15 @@ key_templates <-
   ) |>
   ggplot(aes(x = time, y = name, fill = d)) + 
   geom_raster() +
-  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  scale_fill_viridis_c(name = "Distance") +
   labs(x = "Time (s)", y = "Template", fill = NULL) +
   theme_classic()                                      # Change the theme?
 
 ```
+
+***
+
+Extra info
 
 ### Chordograms
 
@@ -297,11 +323,15 @@ key_templates <-
   ) |>
   ggplot(aes(x = time, y = name, fill = d)) + 
   geom_raster() +
-  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  scale_fill_viridis_c(name = "Distance") +
   labs(x = "Time (s)", y = "Template", fill = NULL) +
   theme_classic()                                      # Change the theme?
 
 ```
+
+***
+
+Extra info
 
 #### Chordogram of song 2 (normalistation = identity, distance = cosine)
 
@@ -315,11 +345,15 @@ key_templates <-
   ) |>
   ggplot(aes(x = time, y = name, fill = d)) + 
   geom_raster() +
-  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  scale_fill_viridis_c(name = "Distance") +
   labs(x = "Time (s)", y = "Template", fill = NULL) +
   theme_classic()                                      # Change the theme?
 
 ```
+
+***
+
+Extra info
 
 #### Chordogram of song 2 (normalistation = Manhattan, distance = Manhattan)
 
@@ -333,9 +367,12 @@ key_templates <-
   ) |>
   ggplot(aes(x = time, y = name, fill = d)) + 
   geom_raster() +
-  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  scale_fill_viridis_c(name = "Distance") +
   labs(x = "Time (s)", y = "Template", fill = NULL) +
   theme_classic()                                      # Change the theme?
 
 ```
 
+***
+
+Extra info
