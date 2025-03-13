@@ -287,6 +287,8 @@ key_templates <-
 
 Extra info
 
+***
+
 #### Keygram of song 2
 
 ```{r}
@@ -371,6 +373,72 @@ Extra info
   labs(x = "Time (s)", y = "Template", fill = NULL) +
   theme_classic()                                      # Change the theme?
 
+```
+
+***
+
+Extra info
+
+### Novelty functions
+
+#### Energy novelty
+
+```{r}
+"features/reinout-w-1.json" |>
+  compmus_energy_novelty() |> 
+  ggplot(aes(t, novelty)) +
+  geom_line() +
+  theme_minimal() +
+  labs(x = "Time (s)", y = "Energy Novelty")
+```
+
+***
+
+Extra info
+
+#### Spectral novelty
+
+***
+
+Extra info
+
+```{r}
+"features/reinout-w-1.json" |>
+  compmus_spectral_novelty() |> 
+  ggplot(aes(t, novelty)) +
+  geom_line() +
+  theme_minimal() +
+  labs(x = "Time (s)", y = "Spectral Novelty")
+```
+
+### Tempograms
+
+#### Regular tempogram
+
+```{r}
+"features/reinout-w-1.json" |>
+  compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(x = "Time (s)", y = "Tempo (BPM)") +
+  theme_classic()
+```
+
+***
+
+Extra info
+
+#### Cyclic tempogram
+
+```{r}
+"features/reinout-w-1.json" |>
+  compmus_tempogram(window_size = 8, hop_size = 1, cyclic = TRUE) |>
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(x = "Time (s)", y = "Tempo (BPM)") +
+  theme_classic()
 ```
 
 ***
