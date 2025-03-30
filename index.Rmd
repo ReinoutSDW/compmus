@@ -1,188 +1,66 @@
 ---
-title: "Rally house and trance compared to rest of class corpus"
-author: "Reinout"
+title: "House vs. Trance: what's the difference?"
 output: 
   flexdashboard::flex_dashboard:
-    storyboard: true
+    theme: 
+      version: 4
+      bootswatch: lux
+    orientation: rows
+    vertical_layout: scroll
 ---
 
 ```{r setup, include=FALSE}
-library(tidyverse)
-library(tidymodels)
 library(flexdashboard)
-library(plotly)
-library(patchwork)
-library(recipes)
+library(corrplot)
+library(tidyverse)
+library(ggplot2)
+source("compmus.R")
+library(tidymodels)
 library(ggdendro)
 library(heatmaply)
-source("compmus.R")
-```
+library(plotly)
+library(shiny)
+library(ggthemes)
+library(htmltools)
+library(gt)
 
-### Welcome
+get_conf_mat <- function(fit) {
+  outcome <- .get_tune_outcome_names(fit)
+  fit |> 
+    collect_predictions() |> 
+    conf_mat(truth = outcome, estimate = .pred_class)
+}  
 
-Hi, welcome to my website. On this site there's an analysis of the class corpus of Computational Musicology 2025.
+get_pr <- function(fit) {
+  fit |> 
+    conf_mat_resampled() |> 
+    group_by(Prediction) |> mutate(precision = Freq / sum(Freq)) |> 
+    group_by(Truth) |> mutate(recall = Freq / sum(Freq)) |> 
+    ungroup() |> filter(Prediction == Truth) |> 
+    select(class = Prediction, precision, recall)
+}  
 
-For my own songs, I found both on a YouTube channel called BORNEO. I'm an amateur DJ, and my usual set starts off with rally house (reinout-w-1) and gradually flows into trance (reinout-w-2). I was looking for royalty hard house at first, but couldn't find so. Then I started looking for royalty free trance, and BORNEO showed up. On his page, I found both songs.
+compmus2025 <- read_csv("compmus2025.csv")
 
-### Chromagram
+cluster_juice <-
+  recipe(
+    filename ~
+      arousal +
+      danceability +
+      instrumentalness +
+      tempo +
+      valence,
+    data = compmus2025
+  ) |>
+  step_center(all_predictors()) |>
+  step_scale(all_predictors()) |> 
+  # step_range(all_predictors()) |> 
+  prep(compmus2025) |>
+  juice() |>
+  column_to_rownames("filename")
 
-```{r}
-"features/reinout-w-1.json" |>                         # Change the track
-  compmus_chroma(norm = "identity") |>                 # Change the norm
-  ggplot(aes(x = time, y = pc, fill = value)) + 
-  geom_raster() +
-  scale_y_continuous(
-    breaks = 0:11,
-    minor_breaks = NULL,
-    labels = c(
-                "C", "C#|Db", "D", "D#|Eb",
-                "E", "F", "F#|Gb", "G",
-                "G#|Ab", "A", "A#|Bb", "B"
-              )
-  ) +
-  scale_fill_viridis_c(guide = "none") +               # Change the colours?
-  labs(x = "Time (s)", y = NULL, fill = NULL) +
-  theme_classic()                                      # Change the theme?
-```
+compmus_dist <- dist(cluster_juice, method = "euclidean")
 
-***
-
-Extra info
-
-### Cepstogram
-
-```{r}
-"features/reinout-w-1.json" |>                         # Change the track
-  compmus_mfccs(norm = "identity") |>                  # Change the norm
-  ggplot(aes(x = time, y = mfcc, fill = value)) + 
-  geom_raster() +
-  scale_y_continuous(
-    breaks = 0:12,
-    minor_breaks = NULL,
-  ) +
-  scale_fill_viridis_c(guide = "none") +               # Change the colours?
-  labs(x = "Time (s)", y = "Coefficient Number", fill = NULL) +
-  theme_classic()  
-```
-
-***
-
-Extra info
-
-### Chroma-based self-similarity
-
-```{r}
-"features/reinout-w-1.json" |>                           # Change the track
-  compmus_chroma(norm = "identity") |>                 # Change the norm
-  compmus_self_similarity(
-    feature = pc,
-    distance = "euclidean"                             # Change the distance
-  ) |>   
-  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
-  geom_raster() +
-  scale_fill_viridis_c(guide = "none") +               # Change the colours?
-  labs(x = "Time (s)", y = NULL, fill = NULL) +
-  theme_classic()                                      # Change the theme?                                    # Change the theme?
-```
-
-***
-
-Extra info
-
-### Timbre-based self-similarity
-
-```{r}
-"features/reinout-w-1.json" |>                         # Change the track
-  compmus_mfccs(norm = "identity") |>                  # Change the norm
-  compmus_self_similarity(
-    feature = mfcc,
-    distance = "euclidean"                             # Change the distance
-  ) |>   
-  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
-  geom_raster() +
-  scale_fill_viridis_c(guide = "none") +               # Change the colours?
-  labs(x = "Time (s)", y = NULL, fill = NULL) +
-  theme_classic()                                      # Change the theme?
-```
-
-***
-
-Extra info
-
-### The more arousing, the more engaging, the more dancable
-
-```{r}
-aisc2024 <- read_csv("compmus2025.csv")
-
-aisc2024 |>                   # Start with the data
-  ggplot(                     # Set up the plot.
-    aes(
-      x = arousal,
-      y = engagingness,
-      colour = danceability,
-      label = filename
-    )
-  ) +
-  geom_point() +              # Scatter plot.
-  geom_rug(linewidth = 0.1) + # Add 'fringes' to show data distribution.
-  geom_text(                  # Add text labels from above.
-    x = 6.304508209228516,
-    y = 1.0374429416656494,
-    label = "reinout-w-1",
-    size = 2,                 # Override size (not loudness here).
-    hjust = "left",           # Align left side of label with the point.
-    vjust = "center",         # Align vertical centre of label with the point.
-    angle = 30,                # Rotate the text label
-    color = "black"                # Rotate the text label
-  ) +
-  geom_text(                  # Add text labels from above.
-    x = 6.568565845489502,
-    y = 0.9357294034957886,
-    label = "reinout-w-2",
-    size = 2,                 # Override size (not loudness here).
-    hjust = "left",           # Align left side of label with the point.
-    vjust = "center",         # Align vertical centre of label with the point.
-    angle = 30,                # Rotate the text label
-    color = "black"
-  ) +
-  scale_x_continuous(         # Fine-tune the x axis.
-    limits = c(3, 7.5),
-    breaks = c(3, 5.25, 7.5), # Specify grid lines
-    minor_breaks = NULL       # Remove 'minor' grid lines.
-  ) +
-  scale_y_continuous(         # Fine-tune the y axis in the same way.
-    limits = c(0, 1.2),
-    breaks = c(0, 0.6, 1.2),
-    minor_breaks = NULL
-  ) +
-  scale_colour_viridis_c() +  # Use the popular viridis colour palette.
-  scale_size_continuous(      # Fine-tune the sizes of each point.
-    trans = "exp",            # Use an exp transformation to emphasise loud..
-    guide = "none"            # Remove the legend for size.
-  ) +
-  theme_light() +             # Use a simpler theme.
-  labs(                       # Make the titles nice.
-    x = "Arousal",
-    y = "Engagingness",
-    colour = "Danceability"
-  )
-ggplotly()
-```
-
-***
-
-On the left is the graph. When it comes to my tracks, we can see that they are very high in both engagingness and arousal compared to the rest of the class. For example, 'reinout-w-1' is number 4 in engagingness, and 'reinout-w-2' is number 3 in arousal. They are also both high in danceability.
-
-Essentia characterised my tracks correctly. Both tracks have a lot of energy, which correlates with the variables above being high.
-
-When it comes to the rest of the corpus, my songs have more energy. This is also what I concluded when I listened to the songs of the corpus itself. My tracks are not similar to most of the tracks from the corpus, meaning Essentia did a good job identifying.
-
-### What we found
-
-As can be seen in the graph, the engagingness increases when the arousal increases. This means that the engagingness and the arousal are positively correlated. Furthermore, as we can see the engagingness and arousal increase, the color of the data becomes more and more towards yellow, starting from dark blue. This means that the danceabiltiy also increases with the engagingness and the arousal. Conclusion: all three variables are positively correlated.
-
-
-```{r}
 #      C     C#    D     Eb    E     F     F#    G     Ab    A     Bb    B
 major_chord <-
   c(   1,    0,    0,    0,    1,    0,    0,    1,    0,    0,    0,    0)
@@ -264,11 +142,221 @@ key_templates <-
     "B:maj", circshift(major_key, 11),
     "D#:min", circshift(minor_key, 3)
   )
+
 ```
 
-### Keygrams
 
-#### Keygram of song 1
+1: Introduction {.storyboard}
+=========================================
+
+### Welcome!
+
+By Reinout Wolting - 30/03/2025
+
+Welcome to my portfolio for Computational Musicology! On this site there's an analysis of 2 songs, together with a comparison of them with the class corpus of Computational Musicology 2025. 
+
+I decided to take both songs from YouTube, since I know there a lot of unpopular music artists who deserve more attention. Besides that, I don't like the type of music that AI makes.
+
+***
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+### Song 1: House song
+
+I found my first song on a YouTube channel called <a href="https://www.youtube.com/@ProdByBorneo" style="color:blue;">BORNEO</a>. I came across this channel when I was looking for a UK garage / house beat. Then I came across this song and I liked it. This style of house is called rally house, and is often related to race cars.
+
+I'm a DJ myself, and my usual set starts off with songs that are similar to this one (e.g. LOSTBOYJAY - COULD BE WRONG). 
+
+I will further refer to this song as 'House Song'.
+
+```{=html}
+<audio controls>
+  <source src="reinout-w-1.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+```
+
+***
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+### Song 2: Trance song
+
+I found my second song also via <a href="https://www.youtube.com/@ProdByBorneo" style="color:blue;">BORNEO</a>. However, this song isn't rally house, but trance. This creates for the song being a bit faster and having more energy.
+
+My usual DJ set gradually flows from rally house into trance, which is why I'm eager to see the exact differences between the two.
+
+I will further refer to this song as 'Trance Song'.
+
+```{=html}
+<audio controls>
+  <source src="reinout-w-2.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+```
+
+***
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+2: Track-level features {.storyboard}
+=========================================
+
+### Essentia features correlation
+
+```{r, echo=FALSE}
+library(readr)
+compmus2025 <- read_csv("compmus2025.csv")
+correlation_compmus2025 <- cor(compmus2025[sapply(compmus2025, is.numeric)], use = "pairwise.complete.obs")
+corrplot(correlation_compmus2025, method = 'number')
+title("Correlations between parameters of the class corpus", line=3.4)
+
+```
+
+*** 
+
+**Class corpus features correlation:**
+
+In this graph, we can see the correlation between the different features from Essentia. On the diagonal column, all features are 1.00, because the correlation between two of the same variables is always 1.00. Furthermore, we can see that instrumentalness and arousal have the weakest correlation, with a score of -0.69. Valence and arousal have the strongest correlation with a score of 0.55. This makes sense, because the positivity of a song goes together well with whether or not you get aroused by it.
+
+
+### Essentia features in class corpus
+
+```{r}
+aisc2024 <- read_csv("compmus2025.csv")
+
+aisc2024 |>                   # Start with the data
+  ggplot(                     # Set up the plot.
+    aes(
+      x = arousal,
+      y = engagingness,
+      colour = danceability,
+      label = filename
+    )
+  ) +
+  geom_point() +              # Scatter plot.
+  geom_rug(linewidth = 0.1) + # Add 'fringes' to show data distribution.
+  geom_text(                  # Add text labels from above.
+    x = 4.757043361663818,
+    y = 0.40362357020378113,  # 0.02 added to data point
+    label = "House Song",
+    size = 2,                 # Override size (not loudness here).
+    hjust = "left",           # Align left side of label with the point.
+    vjust = "center",         # Align vertical centre of label with the point.
+    angle = 30,                # Rotate the text label
+    color = "black"                # Rotate the text label
+  ) +
+  geom_text(                  # Add text labels from above.
+    x = 5.421286582946777,
+    y = 0.6480021667480469,
+    label = "Trance Song",
+    size = 2,                 # Override size (not loudness here).
+    hjust = "left",           # Align left side of label with the point.
+    vjust = "center",         # Align vertical centre of label with the point.
+    angle = 30,                # Rotate the text label
+    color = "black"
+  ) +
+  scale_x_continuous(         # Fine-tune the x axis.
+    limits = c(3, 7.5),
+    breaks = c(3, 5.25, 7.5), # Specify grid lines
+    minor_breaks = NULL       # Remove 'minor' grid lines.
+  ) +
+  scale_y_continuous(         # Fine-tune the y axis in the same way.
+    limits = c(0, 1.2),
+    breaks = c(0, 0.6, 1.2),
+    minor_breaks = NULL
+  ) +
+  scale_colour_viridis_c() +  # Use the popular viridis colour palette.
+  scale_size_continuous(      # Fine-tune the sizes of each point.
+    trans = "exp",            # Use an exp transformation to emphasise loud..
+    guide = "none"            # Remove the legend for size.
+  ) +
+  theme_economist() +             # Use a simpler theme.
+  labs(                       # Make the titles nice.
+    title = "Correlation between arousal, engagingness and danceability",
+    x = "Arousal",
+    y = "Engagingness",
+    colour = "Danceability"
+  )
+ggplotly()
+
+```
+
+***
+
+**Feature comparison of my songs vs. class corpus:**
+
+When it comes to my tracks, we can see that they are very high in both engagingness and arousal compared to the rest of the class. For example, Trance Song is number 2 in arousal. They are also both high in danceability. 
+
+This means that Essentia characterised my tracks correctly. Both tracks have a lot of energy, which correlates with the variables above being high.
+
+When it comes to the rest of the corpus, my songs have more energy. This is also what I concluded when I listened to the songs of the corpus itself. My tracks are not similar to most of the tracks from the corpus, meaning Essentia did a good job identifying.
+
+As can be seen in the graph, the engagingness increases when the arousal increases. This means that the engagingness and the arousal are positively correlated. Furthermore, as we can see the engagingness and arousal increase, the color of the data becomes more and more towards yellow, starting from dark blue. This means that the danceabiltiy also increases with the engagingness and the arousal. Conclusion: all three variables are positively correlated.
+
+
+
+3: Chroma features {.storyboard}
+=========================================
+
+### Chromagram: House Song
+
+```{r}
+"features/reinout-w-1.json" |>                         # Change the track
+  compmus_chroma(norm = "identity") |>                 # Change the norm
+  ggplot(aes(x = time, y = pc, fill = value)) + 
+  geom_raster() +
+  scale_fill_viridis_c(name = "Intensity") +               # Add legend by setting a name
+  scale_y_continuous(
+    breaks = 0:11,
+    minor_breaks = NULL,
+    labels = c(
+                "C", "C#|Db", "D", "D#|Eb",
+                "E", "F", "F#|Gb", "G",
+                "G#|Ab", "A", "A#|Bb", "B"
+              )
+  ) +
+  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  labs(title = "Chromagram of House Song", x = "Time (s)", y = NULL, fill = NULL) +
+  theme_economist()                                      # Change the theme?
+```
+
+***
+
+A chromagram shows the intensity of each pitch class over time. It’s a great way to visualize the harmonic content of a track. The x-axis shows time in seconds and the y-axis lists the 12 pitch classes. Brighter colors represent higher intensity (in other words: that note is more prominent at that moment).
+
+This chromagram of House Song shows clear, repeating bright spots in pitch classes like A, G, F, and D. This means that House Song has a looping harmonic structure. This is a typical characteristic for house music: consistent and rhythmically stable.
+You can also see that pitch class G is more active in the song during the bridges, while A, F and D are more consistent throughout the song.
+
+### Chromagram: Trance Song
+
+```{r}
+"features/reinout-w-2.json" |>                         # Change the track
+  compmus_chroma(norm = "identity") |>                 # Change the norm
+  ggplot(aes(x = time, y = pc, fill = value)) + 
+  geom_raster() +
+  scale_fill_viridis_c(name = "Intensity") +               # Add legend by setting a name
+  scale_y_continuous(
+    breaks = 0:11,
+    minor_breaks = NULL,
+    labels = c(
+                "C", "C#|Db", "D", "D#|Eb",
+                "E", "F", "F#|Gb", "G",
+                "G#|Ab", "A", "A#|Bb", "B"
+              )
+  ) +
+  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  labs(title = "Chromagram of Trance Song", x = "Time (s)", y = NULL, fill = NULL) +
+  theme_economist()                                      # Change the theme?
+```
+
+***
+
+A chromagram shows the intensity of each pitch class over time. It’s a great way to visualize the harmonic content of a track. The x-axis shows time in seconds and the y-axis lists the 12 pitch classes. Brighter colors represent higher intensity (in other words: that note is more prominent at that moment).
+
+Trance Song's chromagram looks more evenly distributed. There’s less repetition and more pitch variation throughout the track. Notes like A, E, G and D are strong throughout, but in a more fluid way. However, there are not certain parts where one of these pitch classes is more prominent during a certain part of the song. This is a difference with House Song. This also aligns with trance's style: instead of repeating loops, the song is one long string of music with not that much variation.
+
+### Keygram: House Song
 
 ```{r}
 "features/reinout-w-1.json" |> 
@@ -281,19 +369,29 @@ key_templates <-
   ggplot(aes(x = time, y = name, fill = d)) + 
   geom_raster() +
   scale_fill_viridis_c(name = "Distance") +               # Add legend by setting a name
-  labs(x = "Time (s)", y = "Template", fill = "Distance") +
-  theme_classic()                                      # Change the theme?
-
+  labs(title = "Keygram of House Song", x = "Time (s)", y = "Template", fill = "Distance") +
+  theme_economist()                                      # Change the theme?
 
 ```
 
 ***
 
-Extra info
+```{=html}
+<audio controls>
+  <source src="reinout-w-1_transition.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+```
 
-***
+Keygram plots visualize compares the chroma features of the audio to a set of key templates. This shows how the harmonic content of the two songs evolves over time. The color scale represents the distance between the chroma and the closest matching key template: darker areas represent weaker harmonic alignment., and lighter areas represent weaker harmonic alignment.
 
-#### Keygram of song 2
+The keygram of House Song shows clear, repeating dark bands around D major, G major, D minor and G minor. In other words: the keys D and G are used the most. These represent House Song’s stable and looped chord progressions, which is typical for house music.
+Right after the chorus, the track enters a bridge. This transition indicates with a darker line in the keygram: this means stronger harmonic alignment.
+Overall, the structure and harmonic clarity support its classification as a house track.
+
+In the audio above is a transition from a chorus (brighter area) to a darker (purple) area:
+
+### Keygram: Trance Song
 
 ```{r}
 "features/reinout-w-2.json" |> 
@@ -306,18 +404,28 @@ Extra info
   ggplot(aes(x = time, y = name, fill = d)) + 
   geom_raster() +
   scale_fill_viridis_c(name = "Distance") +
-  labs(x = "Time (s)", y = "Template", fill = NULL) +
-  theme_classic()                                      # Change the theme?
+  labs(title = "Keygram of Trance Song", x = "Time (s)", y = "Template", fill = NULL) +
+  theme_economist()                                      # Change the theme?
 
 ```
 
 ***
 
-Extra info
+Keygram plots visualize compares the chroma features of the audio to a set of key templates. This shows how the harmonic content of the two songs evolves over time. The color scale represents the distance between the chroma and the closest matching key template: darker areas represent weaker harmonic alignment., and lighter areas represent weaker harmonic alignment.
 
-### Chordograms
+The keygram for Trance Song is more continuous, with fewer strong dark bands. This means Trance Song has a more layered and evolving harmonic structure, which is common in trance music. This is also what you can hear when you play the song. 
+Furthermore, there are not certain keys that are way more intense than other keys, meaning the keys in this song are somewhat equally distributed.
 
-#### Chordogram of song 1
+### Chordogram: general
+
+A chordogram visualizes how well the chroma features of a song match different chord templates over time. Each row represents a chord template and each column is a time slice. The color indicates the distance: how well the chroma at that moment matches the chord. The color scale represents the distance between the chroma and the closest matching key template: darker areas represent stronger harmonic alignment, and lighter areas represent weaker harmonic alignment.
+
+***
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+
+### Chordogram: House Song (normalistation = identity, distance = cosine)
 
 ```{r}
 "features/reinout-w-1.json" |> 
@@ -330,16 +438,38 @@ Extra info
   ggplot(aes(x = time, y = name, fill = d)) + 
   geom_raster() +
   scale_fill_viridis_c(name = "Distance") +
-  labs(x = "Time (s)", y = "Template", fill = NULL) +
-  theme_classic()                                      # Change the theme?
+  labs(title = "Chordogram of House Song (identity, cosine)", x = "Time (s)", y = "Template", fill = NULL) +
+  theme_economist()                                      # Change the theme?
 
 ```
 
 ***
 
-Extra info
+This chordogram shows the clear harmonic loops in House Song. There are dark horizontal bands at regular intervals, showing repeated, strong matches with the same chords. This is typical for house music, where chord progressions loop in a consistent way. The identity normalization keeps the raw chroma values, and cosine distance focuses on the direction of the chroma vectors. This shows strong matches more clearly.
 
-#### Chordogram of song 2 (normalistation = identity, distance = cosine)
+### Chordogram: House Song (normalistation = manhattan, distance = manhattan)
+
+```{r}
+"features/reinout-w-1.json" |> 
+  compmus_chroma(norm = "identity") |> 
+  compmus_match_pitch_templates(
+    chord_templates,         # Change to chord_templates if desired
+    norm = "manhattan",       # Try different norms (and match it with what you used in `compmus_chroma`)
+    distance = "manhattan"   # Try different distance metrics
+  ) |>
+  ggplot(aes(x = time, y = name, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(name = "Distance") +
+  labs(title = "Chordogram of House Song (manhattan, manhattan)", x = "Time (s)", y = "Template", fill = NULL) +
+  theme_economist()                                      # Change the theme?
+
+```
+
+***
+
+This version of House Song shows a more structured result. The structure is still visible, but the colors are less defined. That’s because the chroma is normalized using Manhattan normalisation, and because the distance is calculated using Manhattan distance. This type of distance is more sensitive to small deviations. As a result, the strong chord matches are less visibly clear. This normalisation and distance uses relative pitch proportions, which can help detect more subtle harmonic shifts.
+
+### Chordogram: Trance Song (normalistation = identity, distance = cosine)
 
 ```{r}
 "features/reinout-w-2.json" |> 
@@ -352,16 +482,16 @@ Extra info
   ggplot(aes(x = time, y = name, fill = d)) + 
   geom_raster() +
   scale_fill_viridis_c(name = "Distance") +
-  labs(x = "Time (s)", y = "Template", fill = NULL) +
-  theme_classic()                                      # Change the theme?
+  labs(title = "Chordogram of Trance Song (identity, cosine)", x = "Time (s)", y = "Template", fill = NULL) +
+  theme_economist()                                      # Change the theme?
 
 ```
 
 ***
 
-Extra info
+In Trance Song, this version shows a more harmonic pattern. There are fewer clearly repeated bands, and instead we see a lot of different matches across different chords. This shows exactly how the genre trance is like: only little difference between chorus and verses. The identity normalization keeps the raw chroma values, and cosine distance focuses on the direction of the chroma vectors. This shows strong matches more clearly.
 
-#### Chordogram of song 2 (normalistation = Manhattan, distance = Manhattan)
+### Chordogram: Trance Song (normalistation = manhattan, distance = manhattan)
 
 ```{r}
 "features/reinout-w-2.json" |> 
@@ -374,50 +504,230 @@ Extra info
   ggplot(aes(x = time, y = name, fill = d)) + 
   geom_raster() +
   scale_fill_viridis_c(name = "Distance") +
-  labs(x = "Time (s)", y = "Template", fill = NULL) +
-  theme_classic()                                      # Change the theme?
+  labs(title = "Chordogram of Trance Song (manhattan, manhattan)", x = "Time (s)", y = "Template", fill = NULL) +
+  theme_economist()                                      # Change the theme?
 
 ```
 
 ***
 
-Extra info
+This chordogram looks the most scattered, with hardly any clear strong matches. The combination of normalized chroma and Manhattan distance makes the display more sensitive to subtle variations in pitch distribution. This is useful in genres like trance where harmony evolves slowly and the emphasis is more on the atmosphere of the song rather than repetition.
 
-### Novelty functions
+### Chroma-based self-similarity of House Song
 
-#### Energy novelty
+```{r}
+"features/reinout-w-1.json" |>                           # Change the track
+  compmus_chroma(norm = "identity") |>                 # Change the norm
+  compmus_self_similarity(
+    feature = pc,
+    distance = "euclidean"                             # Change the distance
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  labs(title = "Chroma-based self-similarity of House Song", x = "Time (s)", y = NULL, fill = NULL) +
+  theme_economist()                                      # Change the theme?
+```
+
+***
+
+A self-similarity matrix compares every moment of a song with every other moment. The x and y axes both represent time. The color shows how similar two moments are: darker is more similar, lighter is less similar. This helps to reveal the structure of a song: repetitions show up as diagonal lines, and breaks or transitions appear as shifts in the pattern. This self-similarity is based on chroma, which means it can find harmonic/melodic structure.
+
+This chroma-based self-similarity of House Song shows very strong dark blocks. These little blocks show that the harmonic content repeats a lot of times throughout the track. This repeating pattern of chord progressions is typical for house music.
+
+### Chroma-based self-similarity of Trance Song
+
+```{r}
+"features/reinout-w-2.json" |>                           # Change the track
+  compmus_chroma(norm = "identity") |>                 # Change the norm
+  compmus_self_similarity(
+    feature = pc,
+    distance = "euclidean"                             # Change the distance
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  labs(title = "Chroma-based self-similarity of Trance Song", x = "Time (s)", y = NULL, fill = NULL) +
+  theme_economist()                                      # Change the theme?
+```
+  
+***
+
+A self-similarity matrix compares every moment of a song with every other moment. The x and y axes both represent time. The color shows how similar two moments are: darker is more similar, lighter is less similar. This helps to reveal the structure of a song: repetitions show up as diagonal lines, and breaks or transitions appear as shifts in the pattern. This self-similarity is based on chroma, which means it can find harmonic/melodic structure.
+
+Compared to House Song, this matrix is less repetitive and more smooth. In the graph we can see there are less repeated section; there's only the usual dark diagonal line. This is typical for trance: it focuses more on progression and flow than strict looping.
+
+4: Loudness {.storyboard}
+=========================================
+
+### Energy novelty of House Song
 
 ```{r}
 "features/reinout-w-1.json" |>
   compmus_energy_novelty() |> 
   ggplot(aes(t, novelty)) +
   geom_line() +
-  theme_minimal() +
-  labs(x = "Time (s)", y = "Energy Novelty")
+  theme_economist() +
+  labs(title = "Energy novelty of House Song", x = "Time (s)", y = "Energy Novelty")
 ```
 
 ***
 
-Extra info
+Energy novelty functions measure changes in a song’s loudness or dynamics. Peaks represent drops, breakdowns, or sudden boosts in energy. These help to show the structure and tension curve of a track.
 
-#### Spectral novelty
+There are many clear peaks in this graph at 14 seconds (riser + synth, hats, snares come in), 29 seconds (first drop)), 103 seconds (second drop) and 177 seconds (third drop). During these drops, there's first a repeated crash before the drop. After the drop, there's a kick and a bass coming in, creating the enery peaks.
+The graphs shows the structure of House Song loop-based, with predictable bursts of energy. 
+
+### Energy novelty of Trance Song
+
+```{r}
+"features/reinout-w-2.json" |>
+  compmus_energy_novelty() |> 
+  ggplot(aes(t, novelty)) +
+  geom_line() +
+  theme_economist() +
+  labs(title = "Energy novelty of Trance Song", x = "Time (s)", y = "Energy Novelty")
+```
 
 ***
 
-Extra info
+Energy novelty functions measure changes in a song’s loudness or dynamics. Peaks represent drops, breakdowns, or sudden boosts in energy. These help to show the structure and tension curve of a track.
+
+This graph has 2 huge peaks: one at 14 seconds (first drop) and one at 79 seconds (second drop). During these drops, there's first a repeated crash before the drop. After the drop, there's a kick and a bass coming in, creating the enery peaks. You can tell the build-up of Trance Song is longer by the higher energy peaks around the highest peak, indicating more energy before the drop compared to House Song. Throughout the rest of the song, the energy is consistent. This is usual for trance.
+
+### Spectral novelty of House Song
 
 ```{r}
 "features/reinout-w-1.json" |>
   compmus_spectral_novelty() |> 
   ggplot(aes(t, novelty)) +
   geom_line() +
-  theme_minimal() +
-  labs(x = "Time (s)", y = "Spectral Novelty")
+  theme_economist() +
+  labs(title = "Spectral novelty of House Song", x = "Time (s)", y = "Spectral Novelty")
 ```
 
-### Tempograms
+***
 
-#### Regular tempogram
+Spectral novelty tracks how the timbre and frequency content of a song change over time. Peaks represent shifts in instrumentation, texture, or pitch content. These show transitions, build-ups, or new layers.
+
+The graph has many small peaks and visible cycles. This suggests that although the timbre evolves, there are repeating sections. The higher peaks in this graph repeat every 8 beats. This is especially visible towards the end of the song.
+
+### Spectral novelty of Trance Song
+
+```{r}
+"features/reinout-w-2.json" |>
+  compmus_spectral_novelty() |> 
+  ggplot(aes(t, novelty)) +
+  geom_line() +
+  theme_economist() +
+  labs(title = "Spectral novelty of Trance Song", x = "Time (s)", y = "Spectral Novelty")
+```
+
+***
+
+Spectral novelty tracks how the timbre and frequency content of a song change over time. Spikes in the graph indicate shifts in instrumentation, texture, or pitch content — often marking transitions, build-ups, or new layers.
+
+Trance has a flatter and more dense spectral novelty curve. Fewer dramatic jumps, but lots of small fluctuations. This again supports the idea that Trance Song is more gradual compared House Song. The 2 highest peaks in the spectral novelty are a repeated drum starting at 63 seconds and a bridge at 66 seconds.
+
+
+5: Timbre features {.storyboard}
+=========================================
+
+### Cepstogram of House Song
+
+```{r}
+"features/reinout-w-1.json" |>                         # Change the track
+  compmus_mfccs(norm = "identity") |>                  # Change the norm
+  ggplot(aes(x = time, y = mfcc, fill = value)) + 
+  geom_raster() +
+  scale_y_continuous(
+    breaks = 0:12,
+    minor_breaks = NULL,
+  ) +
+  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  labs(title = "Cepstogram of House Song", x = "Time (s)", y = "Coefficient Number", fill = NULL) +
+  theme_economist()  
+```
+
+***
+
+A cepstogram visualizes how the timbre of a song evolves over time. It’s based on MFCCs, which model how humans perceive sound. The x-axis shows time and the y-axis shows the MFCC coefficient. The color represents the intensity of each coefficient.
+
+In House Song's cepstrogram, there are repeated darker green vertical patterns, matching the structure of House Song. Furthermore, there's the usual horizontal blue band at y=0 and light green band at y=1, representing the core timbre.
+
+
+### Cepstogram of Trance Song
+
+```{r}
+"features/reinout-w-2.json" |>                         # Change the track
+  compmus_mfccs(norm = "identity") |>                  # Change the norm
+  ggplot(aes(x = time, y = mfcc, fill = value)) + 
+  geom_raster() +
+  scale_y_continuous(
+    breaks = 0:12,
+    minor_breaks = NULL,
+  ) +
+  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  labs(title = "Cepstogram of Trance Song", x = "Time (s)", y = "Coefficient Number", fill = NULL) +
+  theme_economist()  
+```
+
+***
+
+A cepstogram visualizes how the timbre of a song evolves over time. It’s based on MFCCs, which model how humans perceive sound. The x-axis shows time and the y-axis shows the MFCC coefficient. The color represents the intensity of each coefficient.
+
+For Trance Song, there's only 1 slightly lighter green vertical band at 64-74 seconds. This represents the bridge. For the rest, the cepstrogram is almost continuously the same.
+Furthermore, there's the usual horizontal blue band at y=0 and light green band at y=1, representing the core timbre.
+
+### Timbre-based self-similarity of House Song
+
+```{r}
+"features/reinout-w-1.json" |>                         # Change the track
+  compmus_mfccs(norm = "identity") |>                  # Change the norm
+  compmus_self_similarity(
+    feature = mfcc,
+    distance = "euclidean"                             # Change the distance
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  labs(title = "Timbre-based self-similarity of House Song", x = "Time (s)", y = NULL, fill = NULL) +
+  theme_economist()                                      # Change the theme?
+```
+
+***
+
+A self-similarity matrix compares every moment of a song with every other moment. The x and y axes both represent time. The color shows how similar two moments are: darker is more similar, lighter is less similar. This helps to reveal the structure of a song: repetitions show up as diagonal lines, and breaks or transitions appear as shifts in the pattern. This self-similarity is based on chroma, which means it can find harmonic/melodic structure.
+
+House Song has a very blocky and repeating structure, with clear rectangular patterns and strong diagonal lines. This repetitive, loop-based music is typical for rally house.
+
+### Timbre-based self-similarity of Trance Song
+
+```{r}
+"features/reinout-w-2.json" |>                         # Change the track
+  compmus_mfccs(norm = "identity") |>                  # Change the norm
+  compmus_self_similarity(
+    feature = mfcc,
+    distance = "euclidean"                             # Change the distance
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +               # Change the colours?
+  labs(title = "Timbre-based self-similarity of Trance Song", x = "Time (s)", y = NULL, fill = NULL) +
+  theme_economist()                                      # Change the theme?
+```
+
+***
+
+A self-similarity matrix compares every moment of a song with every other moment. The x and y axes both represent time. The color shows how similar two moments are: darker is more similar, lighter is less similar. This helps to reveal the structure of a song: repetitions show up as diagonal lines, and breaks or transitions appear as shifts in the pattern. This self-similarity is based on chroma, which means it can find harmonic/melodic structure.
+
+This plot is more continuous, as we have seen already a couple times by now. There are a lot of lighter blue and darker blue vertical lines. This show that the timbre is rapidly morphing.
+
+
+6: Temporal features {.storyboard}
+=========================================
+
+### Regular tempogram of House Song
 
 ```{r}
 "features/reinout-w-1.json" |>
@@ -425,15 +735,35 @@ Extra info
   ggplot(aes(x = time, y = bpm, fill = power)) +
   geom_raster() +
   scale_fill_viridis_c(guide = "none") +
-  labs(x = "Time (s)", y = "Tempo (BPM)") +
-  theme_classic()
+  labs(title = "Regular tempogram of House Song", x = "Time (s)", y = "Tempo (BPM)") +
+  theme_economist()
 ```
 
 ***
 
-Extra info
+A regular tempogram shows how the tempo changes over time in a track. The x-axis represents time in seconds and the y-axis shows the tempo of the song in that particularly moment. Brighter colors represent the BPM at a specific time in the song. The regular part of the tempogram makes it so it shows the correct tempo of the song together wtih its tempo harmonics.
 
-#### Cyclic tempogram
+House Song shows a tempo of 128 BPM, which is the most common BPM for rally house. The other lines in the graph are tempo harmonics. These are at the tempi 256 (128x2), 384 (128x3) and 512 (128x4). The drops in tempo match indicate moments where a bridge starts or ends, even though the tempo doesn't change.
+
+### Regular tempogram of Trance Song
+
+```{r}
+"features/reinout-w-2.json" |>
+  compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(title = "Regular tempogram of Trance Song", x = "Time (s)", y = "Tempo (BPM)") +
+  theme_economist()
+```
+
+***
+
+A regular tempogram shows how the tempo changes over time in a track. The x-axis represents time in seconds and the y-axis shows the tempo of the song in that particularly moment. Brighter colors represent the BPM at a specific time in the song. The regular part of the tempogram makes it so it shows the correct tempo of the song together wtih its tempo harmonics.
+
+Trance song's regular tempogram shows a very consistent tempo around 150 BPM, which is very common for trance music. You can also see the tempo harmonics at 300, 450 and 600 BPM. Opposed to House Song, there are no parts that confuse the tempogram in thinking there's a tempo change.
+
+### Cyclic tempogram of House Song
 
 ```{r}
 "features/reinout-w-1.json" |>
@@ -441,83 +771,41 @@ Extra info
   ggplot(aes(x = time, y = bpm, fill = power)) +
   geom_raster() +
   scale_fill_viridis_c(guide = "none") +
-  labs(x = "Time (s)", y = "Tempo (BPM)") +
-  theme_classic()
+  labs(title = "Cyclic tempogram of House Song", x = "Time (s)", y = "Tempo (BPM)") +
+  theme_economist()
 ```
 
 ***
 
-Extra info
+A cyclic tempogram shows how the tempo changes over time in a track. The x-axis represents time in seconds and the y-axis shows the tempo of the song in that particularly moment. Brighter colors represent the BPM at a specific time in the song. The cyclic part of the tempogram makes it so it only shows the correct tempo of the song without its tempo harmonics.
+
+House Song shows a tempo of 128 BPM, which is the most common BPM for rally house. The tempogram is cyclic, so there are no tempo harmonics. The drops in tempo match indicate moments where a bridge starts or ends, even though the tempo doesn't change.
+
+### Cyclic tempogram of Trance Song
 
 ```{r}
-source("compmus.R")
-
-get_conf_mat <- function(fit) {
-  outcome <- .get_tune_outcome_names(fit)
-  fit |> 
-    collect_predictions() |> 
-    conf_mat(truth = outcome, estimate = .pred_class)
-}  
-
-get_pr <- function(fit) {
-  fit |> 
-    conf_mat_resampled() |> 
-    group_by(Prediction) |> mutate(precision = Freq / sum(Freq)) |> 
-    group_by(Truth) |> mutate(recall = Freq / sum(Freq)) |> 
-    ungroup() |> filter(Prediction == Truth) |> 
-    select(class = Prediction, precision, recall)
-}  
-
+"features/reinout-w-2.json" |>
+  compmus_tempogram(window_size = 8, hop_size = 1, cyclic = TRUE) |>
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(title = "Regular tempogram of Trance Song", x = "Time (s)", y = "Tempo (BPM)") +
+  theme_economist()
 ```
 
-```{r}
+***
 
-compmus2025 <- read_csv("compmus2025.csv")
+A cyclic tempogram shows how the tempo changes over time in a track. The x-axis represents time in seconds and the y-axis shows the tempo of the song in that particularly moment. Brighter colors represent the BPM at a specific time in the song. The cyclic part of the tempogram makes it so it only shows the correct tempo of the song without its tempo harmonics.
 
-cluster_juice <-
-  recipe(
-    filename ~
-      arousal +
-      danceability +
-      instrumentalness +
-      tempo +
-      valence,
-    data = compmus2025
-  ) |>
-  step_center(all_predictors()) |>
-  step_scale(all_predictors()) |> 
-  # step_range(all_predictors()) |> 
-  prep(compmus2025) |>
-  juice() |>
-  column_to_rownames("filename")
-```
+Trance song's regular tempogram shows a very consistent tempo around 150 BPM, which is very common for trance music. The tempogram is cyclic, so there are no tempo harmonics. Opposed to House Song, there are no parts that confuse the tempogram in thinking there's a tempo change. However, there is a light blue horizontal band at 113 BPM.
 
-### Hierarchical clustering
-
-```{r}
-compmus_dist <- dist(cluster_juice, method = "euclidean")
-
-compmus_dist |> 
-  hclust(method = "complete") |> # Try single, average, and complete.
-  dendro_data() |>
-  ggdendrogram()
-```
-
-### Heatmaps
-
-```{r}
-heatmaply(
-  cluster_juice,
-  hclustfun = hclust,
-  hclust_method = "complete",  # Change for single, average, or complete linkage.
-  dist_method = "euclidean"
-)
-```
+7: Classification: K-Nearest Neighbor {.storyboard}
+=========================================
 
 ```{r}
 compmus2025_filtered <- 
   compmus2025 |> filter(!is.na(ai)) |> 
-  mutate(ai = factor(if_else(ai, "AI", "Non-AI")))
+  mutate(ai = factor(if_else(ai, "AI", "non-AI")))
 ```
 
 ```{r}
@@ -552,39 +840,102 @@ classification_knn <-
   fit_resamples(compmus_cv, control = control_resamples(save_pred = TRUE))
 ```
 
-### Classification algorithms
+### K-Nearest Neighbor: description
 
-#### k-Nearest Neighbour: Mosaic 
+The K-Nearest Neighbors (KNN) model classifies songs by looking at the most similar examples in the training set. It compares a song’s features like valence, arousal, danceability, instrumentalness, and tempo to nearby values (aka neighbors), and assigns the most common label among these data points (AI or non-AI). On this page, you can see the results of labelling the class corpus with the use of KNN.
+
+***
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+
+### K-nearest neighbor: individual predictions
 
 ```{r}
-classification_knn |> get_conf_mat() |> autoplot(type = "mosaic")
+# Add row numbers to be able to join back later
+compmus2025 <- read_csv("compmus2025.csv") |> mutate(row = row_number())
+
+# Get predictions and match them with the original filenames
+knn_predictions <- classification_knn |>
+  collect_predictions() |> 
+  bind_cols(compmus2025_filtered |> select(filename)) |> 
+  select(filename, actual = ai, predicted = .pred_class) |>
+  distinct() |>  # Remove duplicates from resampling
+  mutate(
+    correct = if_else(actual == predicted, "✔️", "❌"),
+    filename = factor(
+      filename,
+      levels = c("reinout-w-1", "reinout-w-2", sort(setdiff(filename, c("reinout-w-1", "reinout-w-2"))))
+    )
+  ) |>
+  arrange(filename)
+
+# Display in gt table
+knn_predictions |> 
+  gt() |> 
+  tab_header(
+    title = "KNN: Actual vs. Predicted AI Classification"
+  )
+
 ```
 
 ***
 
-Extra info
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
-#### k-Nearest Neighbour: Heatmap 
+
+### Mosaic 
 
 ```{r}
-classification_knn |> get_conf_mat() |> autoplot(type = "heatmap")
+classification_knn |> get_conf_mat() |> autoplot(type = "mosaic") + ggtitle("Confusion matrix (mosaic)")
 ```
 
 ***
 
-Extra info
+A mosaic plot visualizes the confusion matrix as rectangles. The size of the rectangles corresponds to the number of predicitions in each category.
 
-#### k-Nearest Neighbour: Precision and Recall
+As we can see in the mosaic plot, KNN classifies most of the songs correct. On average, about 70% of the songs is classified correctly, which is a decent score for such a simple model.
+
+### Heatmap 
 
 ```{r}
-classification_knn |> get_pr()
+classification_knn |> get_conf_mat() |> autoplot(type = "heatmap") + ggtitle("Confusion matrix (heatmap)")
 ```
 
 ***
 
-Extra info
+The heatmap version of the confusion matrix highlights how many times each prediction outcome occurred, while the shape stays the same.
 
-### Random Forests
+As we can see in the heatmap plot, KNN classifies most of the songs correct. On average, about 70% of the songs is classified correctly, which is a decent score for such a simple model.
+
+### Precision and Recall
+
+```{r}
+classification_knn |> 
+  get_pr() |> 
+  gt() |> 
+  tab_header(title = "Precision and Recall (KNN)") |> 
+  fmt_number(columns = c("precision", "recall"), decimals = 2)
+
+```
+
+***
+
+The precision describes the amount of true positives out of all positives (= true positives + false positives). The recall describes the  amount of true positives out of all true positives + false negatives. These scores show how well a model has performed.
+AI songs usually get a slightly better precision and recall than non-AI songs. This means that KNN is better at correctly identifying  AI songs than non-AI songs.
+
+8: Classification: Random Forest {.storyboard}
+=========================================
+
+### Random Forest: description
+
+This Random Forest model classifies songs as either AI or non-AI using the audio features valence, arousal, danceability, instrumentalness, and tempo. It uses decision trees to find patterns in the data and make predictions.
+
+***
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+### Random Forest: individual predictions
 
 ```{r}
 forest_model <-
@@ -602,10 +953,50 @@ indie_forest <-
 ```
 
 ```{r}
-indie_forest |> get_pr()
+final_rf <- workflow() |> 
+  add_recipe(classification_recipe) |> 
+  add_model(forest_model) |> 
+  fit(data = compmus2025_filtered)
+
+compmus2025_filtered |>
+  bind_cols(predict(final_rf, compmus2025_filtered)) |>
+  select(filename, actual = ai, predicted = .pred_class) |>
+  mutate(
+    correct = if_else(actual == predicted, "✔️", "❌"),
+    filename = factor(
+      filename,
+      levels = c("reinout-w-1", "reinout-w-2", sort(setdiff(filename, c("reinout-w-1", "reinout-w-2"))))
+    )
+  ) |>
+  arrange(filename) |>
+  gt() |> 
+  tab_header(
+    title = "Random Forest: Actual vs. Predicted AI Classification"
+  )
 ```
 
-#### Feature importance
+***
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+
+
+### Random Forest: precision and recall
+
+```{r}
+indie_forest |> 
+  get_pr() |> 
+  gt() |> 
+  tab_header(title = "Precision and Recall (Random Forest)") |> 
+  fmt_number(columns = c("precision", "recall"), decimals = 2)
+``` 
+
+***
+
+The precision describes the amount of true positives out of all positives (= true positives + false positives). The recall describes the  amount of true positives out of all true positives + false negatives. These scores show how well a model has performed.
+AI songs usually get a slightly better precision and recall than non-AI songs. This means that Random Forest is better at correctly identifying  AI songs than non-AI songs.
+
+### Feature importance
 
 ```{r}
 workflow() |> 
@@ -619,29 +1010,68 @@ workflow() |>
   ggplot(aes(name, value)) + 
   geom_col() + 
   coord_flip() +
-  theme_minimal() +
-  labs(x = NULL, y = "Importance")
+  theme_economist() +
+  labs(title = "Feauture importance", x = NULL, y = "Importance")
 ```
 
 ***
 
-Extra info
+This bar plot shows which features the Random Forest model considered most helpful for classification. Instrumentalness, arousal, and danceability are the features that helped the most with classifying the songs. These rankings show which features of the class corpus have the biggest difference between AI songs and non-AI songs.
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
-#### Clearer visualization
+### AI vs. non-AI songs
 
 ```{r}
 compmus2025_filtered |>
-  ggplot(aes(x = valence, y = arousal, colour = ai, size = tempo)) +
+  ggplot(aes(x = tempo, y = arousal, colour = ai, size = danceability, label = filename)) +
   geom_point(alpha = 0.8) +
+  geom_text(                  # Add text labels from above.
+    x = 130,
+    y = 4.777043,  # 0.02 added to data point
+    label = "House Song",
+    size = 2,                 # Override size (not loudness here).
+    hjust = "left",           # Align left side of label with the point.
+    vjust = "center",         # Align vertical centre of label with the point.
+    angle = 30,                # Rotate the text label
+    color = "black"                # Rotate the text label
+  ) +
+  geom_text(                  # Add text labels from above.
+    x = 75,
+    y = 5.441287,
+    label = "Trance Song",
+    size = 2,                 # Override size (not loudness here).
+    hjust = "left",           # Align left side of label with the point.
+    vjust = "center",         # Align vertical centre of label with the point.
+    angle = 30,                # Rotate the text label
+    color = "black"
+  ) +
   scale_color_viridis_d() +
   labs(
-    x = "Valence",
+    title = "AI vs. non-AI Songs by tempo, arousal, and danceability",
+    x = "Tempo",
     y = "Arousal",
-    size = "Tempo",
+    size = "Danceability",
     colour = "AI"
   )
+ggplotly()
 ```
 
 ***
 
-Extra info
+This scatterplot shows different aspects of songs of the class corpus: tempo, arousal and danceability. Purple points represent AI songs, and yellow ones represent non-AI songs, with the size of each point indicating danceability. As we can see, a lot of the songs with the highest tempo are non-AI. Furthermore, a lot of the songs with a BPM between 95 and 140 are AI generated. Apparently the genres with these BPM are genres that AI produces a lot for. This graph also shows that Trance Song's tempo is incorrectly identified; its BPM is 150 (instead of the identified half-time 75).
+
+
+
+9: Contribution {.storyboard}
+=========================================
+
+### Conclusion
+
+The conclusion of this portfolio is that both songs clearly both have energy! They both show this in their energy novelty function.
+Furthermore, House Song shows more variation in general. This can for example be seen in its chordograms and self-similarity matrix. These graphs show that the bridge of House Song has some different features from the rest of the song.
+Trance Song is more the same throughout the song. It's graphs look a bit less interesting, especially the self-similarity matrix and the tempogram.
+When it comes to my taste, I like House Song better to dance on. This is partly because it has a bit more variation compared to Trance Song.
+
+***
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
