@@ -155,7 +155,7 @@ By Reinout Wolting - 30/03/2025
 
 Welcome to my portfolio for Computational Musicology! On this site there's an analysis of 2 songs, together with a comparison of them with the class corpus of Computational Musicology 2025. 
 
-I decided to take both songs from YouTube, since I know there a lot of unpopular music artists who deserve more attention. Besides that, I don't like the type of music that AI makes.
+I decided to take both songs from YouTube, since I know there is a lot of unpopular music artists who deserve more attention. Besides that, I don't like the type of music that AI makes.
 
 ***
 
@@ -286,7 +286,7 @@ ggplotly()
 
 **Feature comparison of my songs vs. class corpus:**
 
-When it comes to my tracks, we can see that they are very high in both engagingness and arousal compared to the rest of the class. For example, Trance Song is number 2 in arousal. They are also both high in danceability. 
+When it comes to my tracks, we can see that they are very high in both engagingness and arousal compared to the rest of the class. For example, Trance Song is the number 2 highestof the class corpus in arousal. They are also both high in danceability. 
 
 This means that Essentia characterised my tracks correctly. Both tracks have a lot of energy, which correlates with the variables above being high.
 
@@ -325,7 +325,7 @@ As can be seen in the graph, the engagingness increases when the arousal increas
 
 A chromagram shows the intensity of each pitch class over time. It’s a great way to visualize the harmonic content of a track. The x-axis shows time in seconds and the y-axis lists the 12 pitch classes. Brighter colors represent higher intensity (in other words: that note is more prominent at that moment).
 
-This chromagram of House Song shows clear, repeating bright spots in pitch classes like A, G, F, and D. This means that House Song has a looping harmonic structure. This is a typical characteristic for house music: consistent and rhythmically stable.
+This chromagram of House Song shows clear, repeating bright spots in pitch classes like A, G, F, and D. This means that House Song has a looping harmonic structure. This is a typical characteristic for house music: rhythmically stable and repeating.
 You can also see that pitch class G is more active in the song during the bridges, while A, F and D are more consistent throughout the song.
 
 ### Chromagram: Trance Song
@@ -354,7 +354,7 @@ You can also see that pitch class G is more active in the song during the bridge
 
 A chromagram shows the intensity of each pitch class over time. It’s a great way to visualize the harmonic content of a track. The x-axis shows time in seconds and the y-axis lists the 12 pitch classes. Brighter colors represent higher intensity (in other words: that note is more prominent at that moment).
 
-Trance Song's chromagram looks more evenly distributed. There’s less repetition and more pitch variation throughout the track. Notes like A, E, G and D are strong throughout, but in a more fluid way. However, there are not certain parts where one of these pitch classes is more prominent during a certain part of the song. This is a difference with House Song. This also aligns with trance's style: instead of repeating loops, the song is one long string of music with not that much variation.
+Trance Song's chromagram looks more evenly distributed. There’s less repetition and more pitch variation throughout the track. Notes like A, E, G and D are strong throughout the song. However, there are not certain parts where one of these pitch classes is more prominent during a certain part of the song. This is a difference with House Song. This also aligns with trance's style: instead of repeating loops, the song is one long string of music with not that much variation.
 
 ### Keygram: House Song
 
@@ -383,13 +383,13 @@ Trance Song's chromagram looks more evenly distributed. There’s less repetitio
 </audio>
 ```
 
-Keygram plots visualize compares the chroma features of the audio to a set of key templates. This shows how the harmonic content of the two songs evolves over time. The color scale represents the distance between the chroma and the closest matching key template: darker areas represent weaker harmonic alignment., and lighter areas represent weaker harmonic alignment.
+Keygram plots compare the chroma features of the audio to a set of key templates. This shows how the harmonic content of the song evolves over time. The color scale represents the distance between the chroma and the closest matching key template: darker areas represent weaker harmonic alignment, and lighter areas represent weaker harmonic alignment.
 
 The keygram of House Song shows clear, repeating dark bands around D major, G major, D minor and G minor. In other words: the keys D and G are used the most. These represent House Song’s stable and looped chord progressions, which is typical for house music.
 Right after the chorus, the track enters a bridge. This transition indicates with a darker line in the keygram: this means stronger harmonic alignment.
 Overall, the structure and harmonic clarity support its classification as a house track.
 
-In the audio above is a transition from a chorus (brighter area) to a darker (purple) area:
+In the audio on the top of this commments is a transition from a chorus (brighter area) to a bridge (darker area):
 
 ### Keygram: Trance Song
 
@@ -411,18 +411,10 @@ In the audio above is a transition from a chorus (brighter area) to a darker (pu
 
 ***
 
-Keygram plots visualize compares the chroma features of the audio to a set of key templates. This shows how the harmonic content of the two songs evolves over time. The color scale represents the distance between the chroma and the closest matching key template: darker areas represent weaker harmonic alignment., and lighter areas represent weaker harmonic alignment.
+Keygram plots compare the chroma features of the audio to a set of key templates. This shows how the harmonic content of the song evolves over time. The color scale represents the distance between the chroma and the closest matching key template: darker areas represent weaker harmonic alignment, and lighter areas represent weaker harmonic alignment.
 
 The keygram for Trance Song is more continuous, with fewer strong dark bands. This means Trance Song has a more layered and evolving harmonic structure, which is common in trance music. This is also what you can hear when you play the song. 
 Furthermore, there are not certain keys that are way more intense than other keys, meaning the keys in this song are somewhat equally distributed.
-
-### Chordogram: general
-
-A chordogram visualizes how well the chroma features of a song match different chord templates over time. Each row represents a chord template and each column is a time slice. The color indicates the distance: how well the chroma at that moment matches the chord. The color scale represents the distance between the chroma and the closest matching key template: darker areas represent stronger harmonic alignment, and lighter areas represent weaker harmonic alignment.
-
-***
-
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
 
 ### Chordogram: House Song (normalistation = identity, distance = cosine)
@@ -445,7 +437,9 @@ A chordogram visualizes how well the chroma features of a song match different c
 
 ***
 
-This chordogram shows the clear harmonic loops in House Song. There are dark horizontal bands at regular intervals, showing repeated, strong matches with the same chords. This is typical for house music, where chord progressions loop in a consistent way. The identity normalization keeps the raw chroma values, and cosine distance focuses on the direction of the chroma vectors. This shows strong matches more clearly.
+A chordogram visualizes how well the chroma features of a song match different chord templates over time. Each row represents a chord template and each column is a time slice. The color indicates the distance: how well the chroma at that moment matches the chord. The color scale represents the distance between the chroma and the closest matching key template: darker areas represent stronger harmonic alignment, and lighter areas represent weaker harmonic alignment.
+
+This chordogram shows the clear harmonic loops in House Song. There are dark horizontal bands at the choruses, showing repeated strong matches with the same chords. This is typical for house music, where chord progressions loop in a consistent way. The identity normalization keeps the raw chroma values, and cosine distance focuses on the direction of the chroma vectors. This shows strong matches more clearly.
 
 ### Chordogram: House Song (normalistation = manhattan, distance = manhattan)
 
@@ -467,7 +461,9 @@ This chordogram shows the clear harmonic loops in House Song. There are dark hor
 
 ***
 
-This version of House Song shows a more structured result. The structure is still visible, but the colors are less defined. That’s because the chroma is normalized using Manhattan normalisation, and because the distance is calculated using Manhattan distance. This type of distance is more sensitive to small deviations. As a result, the strong chord matches are less visibly clear. This normalisation and distance uses relative pitch proportions, which can help detect more subtle harmonic shifts.
+A chordogram visualizes how well the chroma features of a song match different chord templates over time. Each row represents a chord template and each column is a time slice. The color indicates the distance: how well the chroma at that moment matches the chord. The color scale represents the distance between the chroma and the closest matching key template: darker areas represent stronger harmonic alignment, and lighter areas represent weaker harmonic alignment.
+
+This version of House Song shows a more structured result. The structure is still visible, but the colors are less defined. That’s because the chroma is normalized using Manhattan normalisation, and because the distance is calculated using Manhattan distance. This type of distance is more sensitive to small deviations. As a result, the strong chord matches are less visibly clear. This normalisation and distance can detect more subtle harmonic shifts.
 
 ### Chordogram: Trance Song (normalistation = identity, distance = cosine)
 
@@ -489,7 +485,9 @@ This version of House Song shows a more structured result. The structure is stil
 
 ***
 
-In Trance Song, this version shows a more harmonic pattern. There are fewer clearly repeated bands, and instead we see a lot of different matches across different chords. This shows exactly how the genre trance is like: only little difference between chorus and verses. The identity normalization keeps the raw chroma values, and cosine distance focuses on the direction of the chroma vectors. This shows strong matches more clearly.
+A chordogram visualizes how well the chroma features of a song match different chord templates over time. Each row represents a chord template and each column is a time slice. The color indicates the distance: how well the chroma at that moment matches the chord. The color scale represents the distance between the chroma and the closest matching key template: darker areas represent stronger harmonic alignment, and lighter areas represent weaker harmonic alignment.
+
+For Trance Song, this version shows a more harmonic pattern. There are fewer clearly repeated bands, and instead we see a lot of different matches across different chords. This shows exactly how the genre trance is like: only little difference between chorus and verses. The identity normalization keeps the raw chroma values, and cosine distance focuses on the direction of the chroma vectors. This shows strong matches more clearly.
 
 ### Chordogram: Trance Song (normalistation = manhattan, distance = manhattan)
 
@@ -511,7 +509,9 @@ In Trance Song, this version shows a more harmonic pattern. There are fewer clea
 
 ***
 
-This chordogram looks the most scattered, with hardly any clear strong matches. The combination of normalized chroma and Manhattan distance makes the display more sensitive to subtle variations in pitch distribution. This is useful in genres like trance where harmony evolves slowly and the emphasis is more on the atmosphere of the song rather than repetition.
+A chordogram visualizes how well the chroma features of a song match different chord templates over time. Each row represents a chord template and each column is a time slice. The color indicates the distance: how well the chroma at that moment matches the chord. The color scale represents the distance between the chroma and the closest matching key template: darker areas represent stronger harmonic alignment, and lighter areas represent weaker harmonic alignment.
+
+This chordogram looks the most scattered, with hardly any clear strong matches. The combination of normalized chroma and Manhattan distance makes the display more sensitive to subtle variations in pitch distribution. This together with the fact that Trance Song's chords doesn't change that much, makes it hard to draw a conclusion from this graph.
 
 ### Chroma-based self-similarity of House Song
 
@@ -533,7 +533,7 @@ This chordogram looks the most scattered, with hardly any clear strong matches. 
 
 A self-similarity matrix compares every moment of a song with every other moment. The x and y axes both represent time. The color shows how similar two moments are: darker is more similar, lighter is less similar. This helps to reveal the structure of a song: repetitions show up as diagonal lines, and breaks or transitions appear as shifts in the pattern. This self-similarity is based on chroma, which means it can find harmonic/melodic structure.
 
-This chroma-based self-similarity of House Song shows very strong dark blocks. These little blocks show that the harmonic content repeats a lot of times throughout the track. This repeating pattern of chord progressions is typical for house music.
+This chroma-based self-similarity of House Song shows very strong dark blocks. These little blocks show that the harmonic content repeats a lot of times throughout the track. This repeating pattern of chord progressions is typical for house music. Again, the bridges of the song are clearly visible.
 
 ### Chroma-based self-similarity of Trance Song
 
@@ -555,7 +555,7 @@ This chroma-based self-similarity of House Song shows very strong dark blocks. T
 
 A self-similarity matrix compares every moment of a song with every other moment. The x and y axes both represent time. The color shows how similar two moments are: darker is more similar, lighter is less similar. This helps to reveal the structure of a song: repetitions show up as diagonal lines, and breaks or transitions appear as shifts in the pattern. This self-similarity is based on chroma, which means it can find harmonic/melodic structure.
 
-Compared to House Song, this matrix is less repetitive and more smooth. In the graph we can see there are less repeated section; there's only the usual dark diagonal line. This is typical for trance: it focuses more on progression and flow than strict looping.
+Compared to House Song, this matrix is less in a less structured way. In the graph we can see there are less repeated sections; there's only the usual dark diagonal line. This is typical for trance: it uses the same elements throughout the entire song.
 
 4: Loudness {.storyboard}
 =========================================
@@ -575,7 +575,7 @@ Compared to House Song, this matrix is less repetitive and more smooth. In the g
 
 Energy novelty functions measure changes in a song’s loudness or dynamics. Peaks represent drops, breakdowns, or sudden boosts in energy. These help to show the structure and tension curve of a track.
 
-There are many clear peaks in this graph at 14 seconds (riser + synth, hats, snares come in), 29 seconds (first drop)), 103 seconds (second drop) and 177 seconds (third drop). During these drops, there's first a repeated crash before the drop. After the drop, there's a kick and a bass coming in, creating the enery peaks.
+There are many clear peaks in this graph at 14 seconds (riser with introduction of synth, hats and snares), 29 seconds (first drop)), 103 seconds (second drop) and 177 seconds (third drop). During these drops, there's first a repeated crash before the drop. After the drop, there's a kick and a bass coming in, creating the enery peaks.
 The graphs shows the structure of House Song loop-based, with predictable bursts of energy. 
 
 ### Energy novelty of Trance Song
@@ -593,7 +593,7 @@ The graphs shows the structure of House Song loop-based, with predictable bursts
 
 Energy novelty functions measure changes in a song’s loudness or dynamics. Peaks represent drops, breakdowns, or sudden boosts in energy. These help to show the structure and tension curve of a track.
 
-This graph has 2 huge peaks: one at 14 seconds (first drop) and one at 79 seconds (second drop). During these drops, there's first a repeated crash before the drop. After the drop, there's a kick and a bass coming in, creating the enery peaks. You can tell the build-up of Trance Song is longer by the higher energy peaks around the highest peak, indicating more energy before the drop compared to House Song. Throughout the rest of the song, the energy is consistent. This is usual for trance.
+This graph has 2 huge peaks: one at 14 seconds (first drop) and one at 69 seconds (second drop). During these drops, there's first a repeated crash before the drop. After the drop, there's a kick and a bass coming in, creating the enery peaks. You can tell the build-up of Trance Song is longer by the higher energy peaks around the highest peak, indicating more energy before the drop compared to House Song. Throughout the rest of the song, the energy is consistent. This is usual for trance.
 
 ### Spectral novelty of House Song
 
@@ -608,7 +608,7 @@ This graph has 2 huge peaks: one at 14 seconds (first drop) and one at 79 second
 
 ***
 
-Spectral novelty tracks how the timbre and frequency content of a song change over time. Peaks represent shifts in instrumentation, texture, or pitch content. These show transitions, build-ups, or new layers.
+Spectral novelty tracks how the timbre and frequency content of a song change over time. Peaks represent shifts in instrumentation or pitch content. These show transitions, build-ups, or new layers.
 
 The graph has many small peaks and visible cycles. This suggests that although the timbre evolves, there are repeating sections. The higher peaks in this graph repeat every 8 beats. This is especially visible towards the end of the song.
 
@@ -625,7 +625,7 @@ The graph has many small peaks and visible cycles. This suggests that although t
 
 ***
 
-Spectral novelty tracks how the timbre and frequency content of a song change over time. Spikes in the graph indicate shifts in instrumentation, texture, or pitch content — often marking transitions, build-ups, or new layers.
+Spectral novelty tracks how the timbre and frequency content of a song change over time. Peaks represent shifts in instrumentation or pitch content. These show transitions, build-ups, or new layers.
 
 Trance has a flatter and more dense spectral novelty curve. Fewer dramatic jumps, but lots of small fluctuations. This again supports the idea that Trance Song is more gradual compared House Song. The 2 highest peaks in the spectral novelty are a repeated drum starting at 63 seconds and a bridge at 66 seconds.
 
@@ -653,7 +653,7 @@ Trance has a flatter and more dense spectral novelty curve. Fewer dramatic jumps
 
 A cepstogram visualizes how the timbre of a song evolves over time. It’s based on MFCCs, which model how humans perceive sound. The x-axis shows time and the y-axis shows the MFCC coefficient. The color represents the intensity of each coefficient.
 
-In House Song's cepstrogram, there are repeated darker green vertical patterns, matching the structure of House Song. Furthermore, there's the usual horizontal blue band at y=0 and light green band at y=1, representing the core timbre.
+In House Song's cepstrogram, there are repeated darker green vertical patterns, matching the structure of House Song: these show where the bridges are. Furthermore, there's the usual horizontal blue band at y=0 and light green band at y=1, representing the core timbre.
 
 
 ### Cepstogram of Trance Song
@@ -676,7 +676,7 @@ In House Song's cepstrogram, there are repeated darker green vertical patterns, 
 
 A cepstogram visualizes how the timbre of a song evolves over time. It’s based on MFCCs, which model how humans perceive sound. The x-axis shows time and the y-axis shows the MFCC coefficient. The color represents the intensity of each coefficient.
 
-For Trance Song, there's only 1 slightly lighter green vertical band at 64-74 seconds. This represents the bridge. For the rest, the cepstrogram is almost continuously the same.
+For Trance Song, there's only 1 slightly darker green vertical band at 64-74 seconds. This represents the bridge. For the rest, the cepstrogram is almost continuously the same.
 Furthermore, there's the usual horizontal blue band at y=0 and light green band at y=1, representing the core timbre.
 
 ### Timbre-based self-similarity of House Song
@@ -741,9 +741,9 @@ This plot is more continuous, as we have seen already a couple times by now. The
 
 ***
 
-A regular tempogram shows how the tempo changes over time in a track. The x-axis represents time in seconds and the y-axis shows the tempo of the song in that particularly moment. Brighter colors represent the BPM at a specific time in the song. The regular part of the tempogram makes it so it shows the correct tempo of the song together wtih its tempo harmonics.
+A regular tempogram shows how the tempo changes over time in a track. The x-axis represents time in seconds and the y-axis shows the tempo of the song in that particular moment. Brighter colors represent the BPM at a specific time in the song. The regular part of the tempogram makes it so it shows the correct tempo of the song together wtih its tempo harmonics.
 
-House Song shows a tempo of 128 BPM, which is the most common BPM for rally house. The other lines in the graph are tempo harmonics. These are at the tempi 256 (128x2), 384 (128x3) and 512 (128x4). The drops in tempo match indicate moments where a bridge starts or ends, even though the tempo doesn't change.
+House Song shows a tempo of 128 BPM, which is the most common BPM for rally house. The other lines in the graph are tempo harmonics. These are at the tempi 256 (128x2), 384 (128x3) and 512 (128x4). The drops in tempo indicate moments where a bridge starts or ends, even though the tempo doesn't change.
 
 ### Regular tempogram of Trance Song
 
@@ -759,7 +759,7 @@ House Song shows a tempo of 128 BPM, which is the most common BPM for rally hous
 
 ***
 
-A regular tempogram shows how the tempo changes over time in a track. The x-axis represents time in seconds and the y-axis shows the tempo of the song in that particularly moment. Brighter colors represent the BPM at a specific time in the song. The regular part of the tempogram makes it so it shows the correct tempo of the song together wtih its tempo harmonics.
+A regular tempogram shows how the tempo changes over time in a track. The x-axis represents time in seconds and the y-axis shows the tempo of the song in that particular moment. Brighter colors represent the BPM at a specific time in the song. The regular part of the tempogram makes it so it shows the correct tempo of the song together wtih its tempo harmonics.
 
 Trance song's regular tempogram shows a very consistent tempo around 150 BPM, which is very common for trance music. You can also see the tempo harmonics at 300, 450 and 600 BPM. Opposed to House Song, there are no parts that confuse the tempogram in thinking there's a tempo change.
 
@@ -777,9 +777,9 @@ Trance song's regular tempogram shows a very consistent tempo around 150 BPM, wh
 
 ***
 
-A cyclic tempogram shows how the tempo changes over time in a track. The x-axis represents time in seconds and the y-axis shows the tempo of the song in that particularly moment. Brighter colors represent the BPM at a specific time in the song. The cyclic part of the tempogram makes it so it only shows the correct tempo of the song without its tempo harmonics.
+A cyclic tempogram shows how the tempo changes over time in a track. The x-axis represents time in seconds and the y-axis shows the tempo of the song in that particular moment. Brighter colors represent the BPM at a specific time in the song. The cyclic part of the tempogram makes it so it only shows the correct tempo of the song without its tempo harmonics.
 
-House Song shows a tempo of 128 BPM, which is the most common BPM for rally house. The tempogram is cyclic, so there are no tempo harmonics. The drops in tempo match indicate moments where a bridge starts or ends, even though the tempo doesn't change.
+House Song shows a tempo of 128 BPM, which is the most common BPM for rally house. The tempogram is cyclic, so there are no tempo harmonics. The drops in tempo indicate moments where a bridge starts or ends, even though the tempo doesn't change.
 
 ### Cyclic tempogram of Trance Song
 
@@ -795,7 +795,7 @@ House Song shows a tempo of 128 BPM, which is the most common BPM for rally hous
 
 ***
 
-A cyclic tempogram shows how the tempo changes over time in a track. The x-axis represents time in seconds and the y-axis shows the tempo of the song in that particularly moment. Brighter colors represent the BPM at a specific time in the song. The cyclic part of the tempogram makes it so it only shows the correct tempo of the song without its tempo harmonics.
+A cyclic tempogram shows how the tempo changes over time in a track. The x-axis represents time in seconds and the y-axis shows the tempo of the song in that particular moment. Brighter colors represent the BPM at a specific time in the song. The cyclic part of the tempogram makes it so it only shows the correct tempo of the song without its tempo harmonics.
 
 Trance song's regular tempogram shows a very consistent tempo around 150 BPM, which is very common for trance music. The tempogram is cyclic, so there are no tempo harmonics. Opposed to House Song, there are no parts that confuse the tempogram in thinking there's a tempo change. However, there is a light blue horizontal band at 113 BPM.
 
@@ -904,7 +904,7 @@ classification_knn |> get_conf_mat() |> autoplot(type = "heatmap") + ggtitle("Co
 
 ***
 
-The heatmap version of the confusion matrix highlights how many times each prediction outcome occurred, while the shape stays the same.
+The heatmap version of the confusion matrix shows how many times each prediction outcome occurred, while the shape stays the same.
 
 As we can see in the heatmap plot, KNN classifies most of the songs correct. On average, about 70% of the songs is classified correctly, which is a decent score for such a simple model.
 
@@ -1067,11 +1067,17 @@ This scatterplot shows different aspects of songs of the class corpus: tempo, ar
 
 ### Conclusion
 
-The conclusion of this portfolio is that both songs clearly both have energy! They both show this in their energy novelty function.
-Furthermore, House Song shows more variation in general. This can for example be seen in its chordograms and self-similarity matrix. These graphs show that the bridge of House Song has some different features from the rest of the song.
-Trance Song is more the same throughout the song. It's graphs look a bit less interesting, especially the self-similarity matrix and the tempogram.
+The conclusion of this portfolio is that both songs clearly have their own structure, even though their genres are similar. This could be seen in basically every graph.
+
+Furthermore, House Song shows more variation in general. This can for example be seen in its chordograms and self-similarity matrix. These graphs show that the bridge of House Song has some different features from the rest of the song. We can also conclude that House Song has an average strucure, with verses, choruses and bridges alternating in standard ratios.
+
+Trance Song is more the same throughout the song. It's graphs look a bit less interesting, especially the self-similarity matrix and the tempogram. All of them are pretty straight-forward; there is not really something surprising. Trance Song has a bit less structure in it: it's a lot of chorus, and less other parts.
 When it comes to my taste, I like House Song better to dance on. This is partly because it has a bit more variation compared to Trance Song.
+
+These conclusions would benefit DJ's, like myself. When mixing in a new song, it’s important this new song’s key isn’t too far off of the current song in the circle of fifths. With the use of keygrams and chordograms, we can find even more specific information about the song compared to the key. When used correctly, we can make even smoother transitions, based on for example chords. The novelty functions showing the structure of the song is also helpful for DJ’s; these help the DJ to time when the transition would occur.
+
+These conclusions would also producers. Producers, especially beginner ones, may have a hard time figuring out what patterns in for example key or in chord to use for a certain genre. My plots can show which are good default picks for both genres. The novelty functions also outline a good structure of a song for both genres.
 
 ***
 
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
